@@ -1,7 +1,8 @@
 const path = require('path')
 const express = require('express')
 const hbs = require('hbs')
-
+const forecast = require('./utils/forecast')
+const geocode = require('./utils/geocode')
 const app = express()
 
 // Define paths for Express config
@@ -46,11 +47,24 @@ app.get('/weather', (req, res) => {
             error: 'Address must be provided'
         })
     }
-    res.send({
-        address,
-        forecast: 50,
-        location: 'Philadelphia',
-        name: 'Mr. Robot'
+    geocode(address, (error, {location, latitude, longitude} = {}) => {
+        if (error) {
+            return res.send({
+                error
+            })
+        }
+        forecast(latitude, longitude, (error, forecastData = {}) => {
+            if (error) {
+                return res.send({
+                    error
+                })
+            }
+            res.send({
+                forecast: forecastData,
+                location,
+                address
+            })
+        })
     })
 })
 
